@@ -1,2 +1,19 @@
+# Idea Files #
+################
+out
 .idea
-target
+*.ipr
+*.iml
+*.iws
+/target
+*/target
+
+# Gradle Files #
+################
+.gradle
+/build
+*/build
+
+# Logs and databases #
+######################
+*.log
