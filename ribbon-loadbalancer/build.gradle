@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.mawen.learn.ribbon'
+version = '8.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':ribbon-core')
+    implementation('com.netflix.netflix-commons:netflix-statistics:0.1.1')
+    implementation('io.reactivex:rxjava:1.0.6')
+    implementation('org.slf4j:slf4j-api:1.6.4')
+    implementation('com.netflix.servo:servo-core:0.7.5')
+    implementation('com.google.guava:guava:14.0.1')
+    implementation('com.netflix.archaius:archaius-core:0.5.12')
+    implementation('com.netflix.netflix-commons:netflix-commons-util:0.1.1')
+    implementation('org.apache.httpcomponents:httpclient:4.1.2')
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
