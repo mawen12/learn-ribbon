@@ -94,6 +94,10 @@ public class Server {
 		}
 	}
 
+	public String getHostPort() {
+		return host + ":" + port;
+	}
+
 	public boolean isAlive() {
 		return isAliveFlag;
 	}

@@ -3,6 +3,8 @@ package com.mawen.learn.ribbon.loadbalancer;
 import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import com.mawen.learn.ribbon.client.ClientException;
@@ -15,8 +17,9 @@ import com.mawen.learn.ribbon.client.config.DefaultClientConfigImpl;
 import com.mawen.learn.ribbon.client.config.IClientConfig;
 import com.netflix.servo.monitor.Monitors;
 import com.netflix.servo.monitor.Timer;
+import com.netflix.util.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author <a href="1181963012mw@gmail.com">mawen12</a>
@@ -240,6 +243,279 @@ public class LoadBalancerContext implements IClientConfigAware {
 		}
 	}
 
-	protected void noteResponse(ServerStats stats, )
+	protected void noteResponse(ServerStats stats, ClientRequest request, Object response, long responseTime) {
+		try {
+			recordStats(stats, responseTime);
+			RetryHandler errorHandler = getRetryHandler();
+			if (errorHandler != null && response != null) {
+				stats.incrementSuccessiveConnectionFailureCount();
+			}
+		}
+		catch (Throwable ex) {
+			log.error("Unexpected exception", ex);
+		}
+	}
 
+	public void noteOpenConnection(ServerStats stats) {
+		if (stats == null) {
+			return;
+		}
+
+		try {
+			stats.incrementActiveRequestsCount();
+		}
+		catch (Throwable ex) {
+			log.info("Unable to note Server Stats", ex);
+		}
+	}
+
+	public Server getServerFromLoadBalancer(URI original, Object loadBalancerKey) throws ClientException {
+		String host = null;
+		int port = -1;
+		if (original != null) {
+			host = original.getHost();
+			Pair<String, Integer> schemeAndPort = deriveSchemeAndPortFromPartialUri(original);
+			port = schemeAndPort.second();
+		}
+
+		ILoadBalancer lb = getLoadBalancer();
+		if (host == null) {
+			if (lb != null) {
+				Server srv = lb.chooseServer(loadBalancerKey);
+				if (srv == null) {
+					throw new ClientException(ClientException.ErrorType.GENERAL,
+							"Load balancer does not have available server for client: " + clientName);
+				}
+				host = srv.getHost();
+				if (host == null) {
+					throw new ClientException(ClientException.ErrorType.GENERAL,
+							"Invalid Server for: " + srv);
+				}
+				log.debug("{} using LB returned Server: {} for request {}", clientName, srv, original);
+				return srv;
+			}
+			else {
+				if (vipAddresses != null && vipAddresses.contains(".")) {
+					throw new ClientException(ClientException.ErrorType.GENERAL,
+							"Method is invoked for client " + clientName + " with partial URI of ("
+									+ original + ") with no load balancer configured. Also, there are multiple vipAddresses " +
+									"and hence no vip address can be chosen to complete this partial uri");
+				}
+				else if (vipAddresses != null) {
+					try {
+						Pair<String, Integer> hostAndPort = deriveHostAndPortFromVipAddress(vipAddresses);
+						host = hostAndPort.first();
+						port = hostAndPort.second();
+					}
+					catch (URISyntaxException e) {
+						throw new ClientException(ClientException.ErrorType.GENERAL,
+								"Method is invoked for client " + clientName + " with partial URI of ("
+										+ original + ") with no load balancer configured." +
+										"Also, the configured/registered vipAddress is unparseable (to determine host and port)");
+					}
+				}
+				else {
+					throw new ClientException(ClientException.ErrorType.GENERAL,
+							this.clientName + " has no LoadBalancer and passed in a partial URL request (with no host:port)."
+									+ " Also has no vipAddress registered");
+				}
+			}
+		}
+		else {
+			boolean shouldInterpretAsVip = false;
+
+			if (lb != null) {
+				shouldInterpretAsVip = isVipRecognized(original.getAuthority());
+			}
+			if (shouldInterpretAsVip) {
+				Server srv = lb.chooseServer(loadBalancerKey);
+				if (srv != null) {
+					host = srv.getHost();
+					if (host == null) {
+						throw new ClientException(ClientException.ErrorType.GENERAL, "Invalid Server for: " + srv);
+					}
+					log.debug("using LB returned Server: {} for request: {}", srv, original);
+					return srv;
+				}
+				else {
+					log.debug("{}:{} assumed to be a valid VIP address or exists in the DNS", host, port);
+				}
+			}
+			else {
+				log.debug("Using full URL passed in by caller (not using load balancer): {}", original);
+			}
+		}
+
+		if (host == null) {
+			throw new ClientException(ClientException.ErrorType.GENERAL, "Request contains no HOST to talk to");
+		}
+
+		return new Server(host, port);
+	}
+
+	protected Pair<String, Integer> deriveSchemeAndPortFromPartialUri(URI uri) {
+		boolean isSecure = false;
+		String scheme = uri.getScheme();
+		if (scheme != null) {
+			isSecure = scheme.equalsIgnoreCase("https");
+		}
+
+		int port = uri.getPort();
+		if (port < 0 && !isSecure) {
+			port = 80;
+		}
+		else if (port < 0 && isSecure) {
+			port = 443;
+		}
+		if (scheme == null) {
+			if (isSecure) {
+				scheme = "https";
+			}
+			else {
+				scheme = "http";
+			}
+		}
+
+		return new Pair<>(scheme, port);
+	}
+
+	protected int getDefaultPortFromScheme(String scheme) {
+		if (scheme == null) {
+			return -1;
+		}
+
+		if (scheme.equalsIgnoreCase("http")) {
+			return 80;
+		}
+		else if (scheme.equalsIgnoreCase("https")) {
+			return 443;
+		}
+		else {
+			return -1;
+		}
+	}
+
+	protected Pair<String, Integer> deriveHostAndPortFromVipAddress(String vipAddress) throws ClientException, URISyntaxException {
+		Pair<String, Integer> hostAndPort = new Pair<>(null, -1);
+		URI uri = new URI(vipAddress);
+
+		String scheme = uri.getScheme();
+		if (scheme == null) {
+			uri = new URI("http://" + vipAddress);
+		}
+
+		String host = uri.getHost();
+		if (host == null) {
+			throw new ClientException("Unable to derive host/port from vip address " + vipAddress);
+		}
+
+		int port = uri.getPort();
+		if (port < 0) {
+			port = getDefaultPortFromScheme(scheme);
+		}
+		if (port < 0) {
+			throw new ClientException("Unable to derive host/port from vip address " + vipAddress);
+		}
+
+		hostAndPort.setFirst(host);
+		hostAndPort.setSecond(port);
+		return hostAndPort;
+	}
+
+	private boolean isVipRecognized(String vipEmbeddedInUri) {
+		if (vipEmbeddedInUri == null) {
+			return false;
+		}
+		if (vipAddresses == null) {
+			return false;
+		}
+		String[] addresses = vipAddresses.split(",");
+		for (String address : addresses) {
+			if (vipEmbeddedInUri.equalsIgnoreCase(address.trim())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public URI reconstructURIWithServer(Server server, URI original) {
+		String host = server.getHost();
+		int port = server.getPort();
+		if (host.equals(original.getHost()) && port == original.getPort()) {
+			return original;
+		}
+
+		String scheme = original.getScheme();
+		if (scheme == null) {
+			scheme = deriveSchemeAndPortFromPartialUri(original).first();
+		}
+
+		try {
+			StringBuilder sb = new StringBuilder();
+			sb.append(scheme).append("://");
+			if (!StringUtils.isBlank(original.getRawUserInfo())) {
+				sb.append(original.getRawUserInfo()).append("@");
+			}
+			sb.append(host);
+			if (port >= 0) {
+				sb.append(":").append(port);
+			}
+			sb.append(original.getRawPath());
+			if (!StringUtils.isBlank(original.getRawQuery())) {
+				sb.append("?").append(original.getRawQuery());
+			}
+			if (!StringUtils.isBlank(original.getRawFragment())) {
+				sb.append("#").append(original.getRawFragment());
+			}
+			URI newURI = new URI(sb.toString());
+			return newURI;
+		}
+		catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public final ServerStats getServerStats(Server server) {
+		ServerStats stats = null;
+		ILoadBalancer lb = this.getLoadBalancer();
+		if(lb instanceof AbstractLoadBalancer) {
+			LoadBalancerStats lbStats = ((AbstractLoadBalancer) lb).getLoadBalancerStats();
+			stats = lbStats.getSingleServerStats(server);
+		}
+		return stats;
+	}
+
+	protected int getNumberRetriesOnSameServer(IClientConfig overrideClientConfig) {
+		int numRetries = maxAutoRetriesNextServer;
+		if (overrideClientConfig != null) {
+			numRetries = overrideClientConfig.getPropertyAsInteger(CommonClientConfigKey.MaxAutoRetriesNextServer, maxAutoRetriesNextServer);
+		}
+		return numRetries;
+	}
+
+	public boolean handleSameServerRetry(Server server, int currentRetryCount, int maxRetries, Throwable e) {
+		if (currentRetryCount > maxRetries) {
+			return false;
+		}
+
+		log.debug("Exception while executing request which is deemed retry-able, retrying..., SAME Server Retry Attempt#: {}",
+				currentRetryCount, server);
+		return true;
+	}
+
+	public final RetryHandler getRetryHandler() {
+		return defaultRetryHandler;
+	}
+
+	public final void setRetryHandler(RetryHandler retryHandler) {
+		this.defaultRetryHandler = retryHandler;
+	}
+
+	public final boolean isOkToRetryOnAllOperations() {
+		return okToRetryOnAllOperations;
+	}
+
+	public final void setOkToRetryOnAllOperations(boolean okToRetryOnAllOperations) {
+		this.okToRetryOnAllOperations = okToRetryOnAllOperations;
+	}
 }

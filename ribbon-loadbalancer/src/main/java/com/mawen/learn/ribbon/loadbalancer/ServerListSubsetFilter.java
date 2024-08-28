@@ -115,7 +115,7 @@ public class ServerListSubsetFilter<T extends Server> extends ZoneAffinityServer
 	}
 
 	@Override
-	public int compare(T o1, T o2) {
+	public int compare(T server1, T server2) {
 		LoadBalancerStats lbStats = getLoadBalancerStats();
 		ServerStats stats1 = lbStats.getSingleServerStat(server1);
 		ServerStats stats2 = lbStats.getSingleServerStat(server2);

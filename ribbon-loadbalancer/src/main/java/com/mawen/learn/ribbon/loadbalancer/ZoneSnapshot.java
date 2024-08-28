@@ -18,10 +18,10 @@ public class ZoneSnapshot {
 	final int activeRequestsCount;
 
 	public ZoneSnapshot() {
-		this(0, 0d, 0, 0);
+		this(0,  0, 0, 0d);
 	}
 
-	public ZoneSnapshot(int instanceCount, double loadPerServer, int circuitTrippedCount, int activeRequestsCount) {
+	public ZoneSnapshot(int instanceCount, int circuitTrippedCount, int activeRequestsCount, double loadPerServer) {
 		this.instanceCount = instanceCount;
 		this.loadPerServer = loadPerServer;
 		this.circuitTrippedCount = circuitTrippedCount;

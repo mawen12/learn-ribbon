@@ -8,8 +8,6 @@ import lombok.Setter;
  * @author <a href="1181963012mw@gmail.com">mawen12</a>
  * @since 2024/8/27
  */
-@Setter
-@Getter
 public abstract class AbstractLoadBalancerPing implements IPing, IClientConfigAware {
 
 	AbstractLoadBalancer lb;
@@ -17,5 +15,13 @@ public abstract class AbstractLoadBalancerPing implements IPing, IClientConfigAw
 	@Override
 	public boolean isAlive(Server server) {
 		return true;
+	}
+
+	public void setLoadBalancer(AbstractLoadBalancer lb) {
+		this.lb = lb;
+	}
+
+	public AbstractLoadBalancer getLoadBalancer() {
+		return lb;
 	}
 }
