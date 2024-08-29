@@ -17,6 +17,9 @@ dependencies {
     implementation 'commons-lang:commons-lang:2.6'
     implementation 'com.netflix.archaius:archaius-core:0.5.12'
     compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }

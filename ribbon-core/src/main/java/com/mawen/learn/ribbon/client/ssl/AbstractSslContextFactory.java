@@ -12,7 +12,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import jdk.nashorn.internal.runtime.logging.Logger;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

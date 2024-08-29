@@ -57,6 +57,10 @@ public class ClientException extends Exception {
 		this(errorCode, message, null);
 	}
 
+	public ClientException(String message, Throwable chainedException) {
+		this(0, message, chainedException);
+	}
+
 	public ClientException(Throwable chainedException) {
 		this(null, null, chainedException);
 	}

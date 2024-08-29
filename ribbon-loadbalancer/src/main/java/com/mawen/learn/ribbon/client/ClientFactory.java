@@ -37,7 +37,7 @@ public class ClientFactory {
 				loadBalancer = registerNamedLoadBalancerFromClientConfig(restClientName, clientConfig);
 			}
 			if (client instanceof AbstractLoadBalancerAwareClient) {
-				client.setLoadBalancer(loadBalancer);
+				((AbstractLoadBalancerAwareClient)client).setLoadBalancer(loadBalancer);
 			}
 		}
 		catch (Throwable e) {

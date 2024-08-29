@@ -83,7 +83,9 @@ public class ServerStats {
 	}
 
 	public ServerStats(LoadBalancerStats lbStats) {
-		connectionFailureThreshold = ;
+		connectionFailureThreshold = lbStats.getConnectionFailureCountThreshold();
+		circuitTrippedTimeoutFactor = lbStats.getCircuitTrippedTimeoutFactor();
+		maxCircuitTrippedTimeout = lbStats.getCircuitTripMaxTimeoutSeconds();
 	}
 
 	public void initialize(Server server) {

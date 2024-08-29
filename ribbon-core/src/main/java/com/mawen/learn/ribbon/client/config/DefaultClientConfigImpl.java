@@ -384,6 +384,24 @@ public class DefaultClientConfigImpl implements IClientConfig {
 		return propertyNameSpace;
 	}
 
+	public static DefaultClientConfigImpl getEmptyConfig() {
+		return new DefaultClientConfigImpl();
+	}
+
+	public static DefaultClientConfigImpl getClientConfigWithDefaultValues(String clientName) {
+		return getClientConfigWithDefaultValues(clientName, DEFAULT_PROPERTY_NAME_SPACE);
+	}
+
+	public static DefaultClientConfigImpl getClientConfigWithDefaultValues() {
+		return getClientConfigWithDefaultValues("default", DEFAULT_PROPERTY_NAME_SPACE);
+	}
+
+	public static DefaultClientConfigImpl getClientConfigWithDefaultValues(String clientName, String namespace) {
+		DefaultClientConfigImpl config = new DefaultClientConfigImpl(namespace);
+		config.loadProperties(clientName);
+		return config;
+	}
+
 	@Override
 	public void loadProperties(String clientName) {
 		enableDynamicProperties = true;

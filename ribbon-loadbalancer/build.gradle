@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id("io.freefair.lombok") version "8.10"
 }
 
 group = 'com.mawen.learn.ribbon'
@@ -20,6 +21,9 @@ dependencies {
     implementation('com.netflix.netflix-commons:netflix-commons-util:0.1.1')
     implementation('org.apache.httpcomponents:httpclient:4.1.2')
     compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }

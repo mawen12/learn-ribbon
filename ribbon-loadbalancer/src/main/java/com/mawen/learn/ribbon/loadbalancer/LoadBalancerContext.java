@@ -480,7 +480,7 @@ public class LoadBalancerContext implements IClientConfigAware {
 		ILoadBalancer lb = this.getLoadBalancer();
 		if(lb instanceof AbstractLoadBalancer) {
 			LoadBalancerStats lbStats = ((AbstractLoadBalancer) lb).getLoadBalancerStats();
-			stats = lbStats.getSingleServerStats(server);
+			stats = lbStats.getSingleServerStat(server);
 		}
 		return stats;
 	}

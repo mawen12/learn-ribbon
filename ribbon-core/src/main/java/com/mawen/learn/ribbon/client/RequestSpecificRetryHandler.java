@@ -28,7 +28,7 @@ public class RequestSpecificRetryHandler implements RetryHandler {
 	protected List<Class<? extends Throwable>> connectionRelated = Lists.newArrayList(SocketException.class);
 
 	public RequestSpecificRetryHandler(boolean okToRetryOnConnectErrors, boolean okToRetryOnAllErrors) {
-		this();
+		this(okToRetryOnConnectErrors, okToRetryOnAllErrors, RetryHandler.DEFAULT, null);
 	}
 
 	public RequestSpecificRetryHandler(boolean okToRetryOnConnectErrors, boolean okToRetryOnAllErrors, RetryHandler baseRetryHandler, IClientConfig clientConfig) {
