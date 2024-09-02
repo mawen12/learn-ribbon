@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id("io.freefair.lombok") version "8.10"
+}
+
+group = 'com.mawen.learn.ribbon'
+version = '8.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':ribbon-core')
+    implementation project(':ribbon-loadbalancer')
+
+    implementation 'commons-collections:commons-collections:3.2.1'
+    implementation 'org.apache.httpcomponents:httpclient:4.2.1'
+    implementation 'com.google.code.findbugs:annotations:2.0.0'
+    implementation 'com.sun.jersey:jersey-client:1.11'
+    implementation 'com.sun.jersey.contribs:jersey-apache-client4:1.11'
+    implementation 'org.slf4j:slf4j-api:1.6.4'
+    implementation "com.netflix.servo:servo-core:0.7.5"
+    implementation "com.google.guava:guava:14.0.1"
+    implementation "com.netflix.archaius:archaius-core:0.5.12"
+    implementation 'com.netflix.netflix-commons:netflix-commons-util:0.1.1'
+
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

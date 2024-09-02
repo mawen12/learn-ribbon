@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.mawen.learn.ribbon'
+version = '8.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':ribbon-core')
+    implementation project(':ribbon-transport')
+    implementation "com.netflix.hystrix:hystrix-core:1.4.0-rc.8"
+    implementation 'javax.inject:javax.inject:1'
+    implementation "io.reactivex:rxjava:1.0.6"
+    implementation "io.reactivex:rxnetty:0.4.6"
+    implementation 'commons-configuration:commons-configuration:1.8'
+    implementation 'com.google.guava:guava:14.0.1'
+    implementation 'com.netflix.archaius:archaius-core:0.5.12'
+    implementation 'io.netty:netty-buffer:4.0.27.Final'
+    implementation 'io.netty:netty-codec-http:4.0.27.Final'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

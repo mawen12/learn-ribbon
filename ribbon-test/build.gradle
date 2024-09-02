@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.mawen.learn.ribbon'
+version = '8.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':ribbon-core')
+    implementation project(':ribbon-loadbalancer')
+    implementation 'org.powermock:powermock-easymock-release-full:1.5.4'
+    implementation 'org.easymock:easymock:3.2'
+    implementation 'org.codehaus.jackson:jackson-mapper-asl:1.9.11'
+    implementation 'com.netflix.eureka:eureka-client:1.1.142'
+    implementation "io.reactivex:rxjava:1.0.6"
+    implementation 'javax.ws.rs:jsr311-api:1.1.1'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
