@@ -1,4 +1,8 @@
 rootProject.name='learn-ribbon'
-include('ribbon-core')
+include 'ribbon-core'
 include 'ribbon-loadbalancer'
+include 'ribbon-httpclient'
+include 'ribbon-test'
+include 'ribbon'
+include 'ribbon-transport'
 
